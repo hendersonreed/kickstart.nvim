@@ -35,13 +35,13 @@ I hope you enjoy your Neovim journey,
 
 P.S. You can delete this when you're done too. It's your config now :)
 --]]
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- set vim completion to behave like zsh completion.
 vim.opt.wildmode = { "longest", "list", "full" }
 
 -- Install package manager
@@ -68,19 +68,13 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
 
-  -- Git related plugins
-  'tpope/vim-fugitive',
-  'tpope/vim-rhubarb',
-
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
-  'junegunn/goyo.vim',
-  'Olical/conjure',
-
 
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
-  { -- LSP Configuration & Plugins
+  {
+    -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
     dependencies = {
       -- Automatically install LSPs to stdpath for neovim
@@ -89,21 +83,23 @@ require('lazy').setup({
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim', opts = {}, tag = 'legacy'},
+      { 'j-hui/fidget.nvim', opts = {}, tag = 'legacy' },
 
       -- Additional lua configuration, makes nvim stuff amazing!
       'folke/neodev.nvim',
     },
   },
 
-  { -- Autocompletion
+  {
+    -- Autocompletion
     'hrsh7th/nvim-cmp',
     dependencies = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip' },
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim', opts = {} },
-  { -- Adds git releated signs to the gutter, as well as utilities for managing changes
+  { 'folke/which-key.nvim',          opts = {} },
+  {
+    -- Adds git releated signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
       -- See `:help gitsigns.txt`
@@ -117,20 +113,8 @@ require('lazy').setup({
     },
   },
 
-  { -- Theme inspired by Atom
-    'navarasu/onedark.nvim',
-    priority = 1000,
-    opts = {
-      highlights = {
-        ["@comment"] = {fg = '#000000', fmt = 'bold'},
-      },
-    },
---    config = function()
---      vim.cmd.colorscheme 'onedark'
---    end,
-  },
-
-  { -- Set lualine as statusline
+  {
+    -- Set lualine as statusline
     'nvim-lualine/lualine.nvim',
     -- See `:help lualine.txt`
     opts = {
@@ -143,20 +127,10 @@ require('lazy').setup({
     },
   },
 
-  { -- Add indentation guides even on blank lines
-    'lukas-reineke/indent-blankline.nvim',
-    -- Enable `lukas-reineke/indent-blankline.nvim`
-    -- See `:help indent_blankline.txt`
-    opts = {
-      char = '┊',
-      show_trailing_blankline_indent = false,
-    },
-  },
-
   -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
+  { 'numToStr/Comment.nvim',         opts = {} },
 
-  -- Fuzzy Finder (files, lsp, etc)
+  -- FuzzyFinder (files, lsp, etc)
   { 'nvim-telescope/telescope.nvim', version = '*', dependencies = { 'nvim-lua/plenary.nvim' } },
 
   -- Fuzzy Finder Algorithm which requires local dependencies to be built.
@@ -172,7 +146,8 @@ require('lazy').setup({
     end,
   },
 
-  { -- Highlight, edit, and navigate code
+  {
+    -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     dependencies = {
       'nvim-treesitter/nvim-treesitter-textobjects',
@@ -182,28 +157,19 @@ require('lazy').setup({
     end,
   },
 
-  -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
-  --       These are some example plugins that I've included in the kickstart repository.
-  --       Uncomment any of the lines below to enable them.
-  -- require 'kickstart.plugins.autoformat',
-  -- require 'kickstart.plugins.debug',
-
-  -- NOTE: The import below automatically adds your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
-  --    You can use this folder to prevent any conflicts with this init.lua if you're interested in keeping
-  --    up-to-date with whatever is in the kickstart repo.
-  --
-  --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
-  --
-  --    An additional note is that if you only copied in the `init.lua`, you can just comment this line
-  --    to get rid of the warning telling you that there are not plugins in `lua/custom/plugins/`.
-  -- { import = 'custom.plugins' },
+  -- prose-editing
+  'junegunn/goyo.vim',
+  -- interactive repl
+  'Olical/conjure',
+  -- clipboard fix for remote servers? must check github to see config
+  -- 'ojroques/nvim-osc52'
 }, {})
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
 
 -- Set highlight on search
-vim.o.hlsearch = false
+vim.o.hlsearch = true
 
 -- Make line numbers default
 vim.wo.number = true
@@ -409,6 +375,11 @@ local on_attach = function(_, bufnr)
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
     vim.lsp.buf.format()
   end, { desc = 'Format current buffer with LSP' })
+
+  -- enable format-on-save when LSP connects
+  -- the better way to do this would be to check for the existence of the format command and only then run it.
+  -- update: I did it - see the bottom of this file.
+  --  vim.cmd [[autocmd BufWritePre * :Format]]
 end
 
 -- Enable the following language servers
@@ -425,6 +396,7 @@ local servers = {
   tsserver = {},
   bashls = {},
   tailwindcss = {},
+  --  racket_langserver = {},
 
   lua_ls = {
     Lua = {
@@ -433,7 +405,7 @@ local servers = {
     },
   },
 }
-
+require('lspconfig').racket_langserver.setup {}
 -- Setup neovim lua configuration
 require('neodev').setup()
 
@@ -507,6 +479,28 @@ cmp.setup {
 }
 
 vim.cmd.colorscheme 'elflord'
+
+-- this command is for turning paths in my homedir into relative links that my website can use.
+vim.cmd [[
+command! StripLink execute "normal! :s/.*assets/\\\/assets/<CR>I![](<ESC>A)<ESC>0:noh<CR>"
+]]
+
+-- Define the function to format if the command exists
+function formatIfCommandExists()
+  local formatCmd = vim.fn.exists(':Format') == 2 and ':Format' or ''
+  vim.cmd('silent! write')
+  if formatCmd ~= '' then
+    vim.cmd(formatCmd)
+  end
+end
+
+-- Set up autocmd for BufWritePre
+vim.api.nvim_exec([[
+  augroup FormatAutogroup
+    autocmd!
+    autocmd BufWritePre * lua formatIfCommandExists()
+  augroup END
+]], false)
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
