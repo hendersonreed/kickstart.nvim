@@ -165,6 +165,11 @@ require('lazy').setup({
   -- 'ojroques/nvim-osc52'
 }, {})
 
+vim.g["conjure#highlight#enabled"] = true
+vim.g["conjure#log#wrap"] = true
+
+
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
 
@@ -323,6 +328,9 @@ require('nvim-treesitter.configs').setup {
         ['<leader>A'] = '@parameter.inner',
       },
     },
+    indent = {
+      enable = true
+    }
   },
 }
 
@@ -395,7 +403,7 @@ local servers = {
   rust_analyzer = {},
   tsserver = {},
   bashls = {},
-  tailwindcss = {},
+  --  tailwindcss = {},
   --  racket_langserver = {},
 
   lua_ls = {
@@ -499,6 +507,16 @@ vim.api.nvim_exec([[
   augroup FormatAutogroup
     autocmd!
     autocmd BufWritePre * lua formatIfCommandExists()
+  augroup END
+]], false)
+
+-- Your existing Neovim configuration
+
+-- Override vim-sleuth for Markdown files
+vim.api.nvim_exec([[
+  augroup SetMarkdownTabstop
+    autocmd!
+    autocmd FileType markdown setlocal tabstop=2 shiftwidth=2 expandtab
   augroup END
 ]], false)
 
