@@ -89,7 +89,14 @@ vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup {
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
-
+  'olical/conjure',
+  {
+    'tpope/vim-fugitive',
+    dependencies = { 'tpope/vim-rhubarb' },
+    init = function()
+      vim.g.github_enterprise_urls = { 'https://github.internal.digitalocean.com' }
+    end,
+  },
   -- See `:help gitsigns` to understand what the configuration keys do
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -118,6 +125,7 @@ require('lazy').setup {
         { '<leader>w', group = '[W]orkspace' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        { '<leader>z', group = 'f[z]f' },
       },
     },
   },
@@ -259,6 +267,7 @@ require('lazy').setup {
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
+        actionlint = {},
         clangd = {},
         gopls = {},
         pyright = {},
@@ -565,5 +574,7 @@ require('gitsigns').setup {
   end,
 }
 
+vim.keymap.set('n', '<leader>zf', require('fzf-lua').files, { desc = 'pick file' })
+vim.keymap.set('n', '<leader>zb', require('fzf-lua').buffers, { desc = 'pick buffer' })
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
