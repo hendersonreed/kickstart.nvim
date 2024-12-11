@@ -90,6 +90,8 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup {
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
   'olical/conjure',
+  'HiPhish/rainbow-delimiters.nvim',
+  'eraserhd/parinfer-rust',
   {
     'tpope/vim-fugitive',
     dependencies = { 'tpope/vim-rhubarb' },
@@ -160,6 +162,7 @@ require('lazy').setup {
         callback = function(event)
           local map = function(keys, func, desc, mode)
             mode = mode or 'n'
+            desc = desc or ''
             vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
 
@@ -269,7 +272,6 @@ require('lazy').setup {
       local servers = {
         actionlint = {},
         clangd = {},
-        gopls = {},
         pyright = {},
         rubocop = {},
         -- ruby_lsp = {},
