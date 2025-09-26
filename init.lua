@@ -89,7 +89,24 @@ vim.opt.rtp:prepend(lazypath)
 
 require('lazy').setup {
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
-  'olical/conjure',
+  'HiPhish/rainbow-delimiters.nvim',
+  'gpanders/nvim-parinfer',
+  'catppuccin/nvim',
+  --{ 'eraserhd/parinfer-rust', build = 'cargo build --release' },
+  --{
+  --  "olimorris/codecompanion.nvim",
+  --  opts = {
+  --   strategies = {
+  --      chat = { adapter = "copilot" },
+  --      inline = { adapter = "copilot" },
+  --      },
+  --  },
+  --  dependencies = {
+  --    "nvim-lua/plenary.nvim",
+  --    "nvim-treesitter/nvim-treesitter",
+  --    "github/copilot.vim",
+  --  },
+  --},
   {
     'tpope/vim-fugitive',
     dependencies = { 'tpope/vim-rhubarb' },
@@ -271,7 +288,9 @@ require('lazy').setup {
         clangd = {},
         gopls = {},
         pyright = {},
-        rubocop = {},
+        shellcheck = {},
+        -- bashls = {},
+        -- rubocop = {},
         -- ruby_lsp = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -330,48 +349,48 @@ require('lazy').setup {
     end,
   },
 
-  { -- Autoformat
-    'stevearc/conform.nvim',
-    event = { 'BufWritePre' },
-    cmd = { 'ConformInfo' },
-    keys = {
-      {
-        '<leader>f',
-        function()
-          require('conform').format { async = true, lsp_format = 'fallback' }
-        end,
-        mode = '',
-        desc = '[F]ormat buffer',
-      },
-    },
-    opts = {
-      notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        local lsp_format_opt
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          lsp_format_opt = 'never'
-        else
-          lsp_format_opt = 'fallback'
-        end
-        return {
-          timeout_ms = 500,
-          lsp_format = lsp_format_opt,
-        }
-      end,
-      formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
-      },
-    },
-  },
+  --  { -- Autoformat
+  --    'stevearc/conform.nvim',
+  --    event = { 'BufWritePre' },
+  --    cmd = { 'ConformInfo' },
+  --    keys = {
+  --      {
+  --        '<leader>f',
+  --        function()
+  --          require('conform').format { async = true, lsp_format = 'fallback' }
+  --        end,
+  --        mode = '',
+  --        desc = '[F]ormat buffer',
+  --      },
+  --    },
+  --    opts = {
+  --      notify_on_error = false,
+  --      format_on_save = function(bufnr)
+  --        -- Disable "format_on_save lsp_fallback" for languages that don't
+  --        -- have a well standardized coding style. You can add additional
+  --        -- languages here or re-enable it for the disabled ones.
+  --        local disable_filetypes = { c = true, cpp = true }
+  --        local lsp_format_opt
+  --        if disable_filetypes[vim.bo[bufnr].filetype] then
+  --          lsp_format_opt = 'never'
+  --        else
+  --          lsp_format_opt = 'fallback'
+  --        end
+  --        return {
+  --          timeout_ms = 500,
+  --          lsp_format = lsp_format_opt,
+  --        }
+  --      end,
+  --      formatters_by_ft = {
+  --        lua = { 'stylua' },
+  --        -- Conform can also run multiple formatters sequentially
+  --        -- python = { "isort", "black" },
+  --        --
+  --        -- You can use 'stop_after_first' to run the first available formatter from the list
+  --        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+  --      },
+  --    },
+  --  },
 
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
@@ -503,9 +522,9 @@ require('lazy').setup {
         -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
         --  If you are experiencing weird indenting issues, add the language to
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
+        additional_vim_regex_highlighting = { 'ruby', 'go' },
       },
-      indent = { enable = true, disable = { 'ruby' } },
+      indent = { enable = true, disable = { 'ruby', 'go' } },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
@@ -576,5 +595,51 @@ require('gitsigns').setup {
 
 vim.keymap.set('n', '<leader>zf', require('fzf-lua').files, { desc = 'pick file' })
 vim.keymap.set('n', '<leader>zb', require('fzf-lua').buffers, { desc = 'pick buffer' })
+
+vim.cmd.colorscheme 'zaibatsu'
+
+-- preview all the colors automatically
+-- Function to automatically cycle through and preview all installed colorschemes
+local function PreviewAllColorschemes()
+  -- 1. Save the name of the current colorscheme to restore it later
+  local current_colorscheme = vim.g.colors_name
+
+  -- 2. Get a list of all available colorschemes
+  local all_colorschemes = vim.fn.getcompletion('', 'color')
+
+  -- 3. Loop through each colorscheme in the list
+  for _, colorscheme in ipairs(all_colorschemes) do
+    -- Use pcall to gracefully handle potential errors from broken colorschemes
+    pcall(function()
+      -- 4. Apply the new colorscheme
+      vim.cmd('colorscheme ' .. colorscheme)
+
+      -- 5. Force a redraw to ensure the UI updates
+      vim.cmd('redraw')
+
+      -- 6. Print the name of the current colorscheme
+      print('Current colorscheme: ' .. colorscheme)
+
+      -- 7. Pause for 1 second to allow you to see the change
+      -- We use vim.cmd('sleep') for a simple, blocking pause.
+      vim.cmd('sleep 1')
+    end)
+  end
+
+  -- 8. Restore the original colorscheme
+  print('Preview finished. Restoring original colorscheme: ' .. current_colorscheme)
+  vim.cmd('colorscheme ' .. current_colorscheme)
+end
+
+-- Create a user command :PreviewColors that calls our Lua function
+vim.api.nvim_create_user_command(
+  'PreviewColors',
+  PreviewAllColorschemes,
+  {
+    -- Add a description for the command, visible in command-line completion
+    desc = 'Automatically cycle through all installed colorschemes'
+  }
+)
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
