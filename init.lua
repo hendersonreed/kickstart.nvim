@@ -18,6 +18,8 @@ vim.g.maplocalleader = ' '
 -- Make line numbers default
 vim.opt.number = true
 vim.opt.mouse = 'a'
+vim.opt.mousescroll = 'ver:1,hor:2'
+
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -49,9 +51,9 @@ vim.opt.scrolloff = 10
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.schedule(function()
-  vim.opt.clipboard = 'unnamedplus'
-end)
+-- vim.schedule(function()
+--   vim.opt.clipboard = 'unnamedplus'
+-- end)
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
@@ -533,6 +535,9 @@ require('lazy').setup {
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
+  {
+    "p00f/alabaster.nvim",
+  }
 }
 
 require('gitsigns').setup {
@@ -596,7 +601,9 @@ require('gitsigns').setup {
 vim.keymap.set('n', '<leader>zf', require('fzf-lua').files, { desc = 'pick file' })
 vim.keymap.set('n', '<leader>zb', require('fzf-lua').buffers, { desc = 'pick buffer' })
 
-vim.cmd.colorscheme 'zaibatsu'
+-- decent theme before I installed alabaster
+-- vim.cmd.colorscheme 'zaibatsu'
+vim.cmd.colorscheme 'alabaster'
 
 -- preview all the colors automatically
 -- Function to automatically cycle through and preview all installed colorschemes
@@ -639,6 +646,59 @@ vim.api.nvim_create_user_command(
     -- Add a description for the command, visible in command-line completion
     desc = 'Automatically cycle through all installed colorschemes'
   }
+)
+
+--[[
+  A custom command to format log files with literal escape sequences.
+  This function will:
+  1. Trigger when the user runs the :CleanAnsiEscape command.
+  2. Check if the current buffer contains literal '\x1b' sequences.
+  3. If so, replace '\n' and '\x1b' with their actual character representations.
+]]
+
+-- Define the function that will perform the formatting.
+local function clean_ansi_escape()
+  -- Get the handle for the current buffer.
+  local buf = vim.api.nvim_get_current_buf()
+
+  -- Safety checks: only run on modifiable buffers.
+  if not vim.api.nvim_buf_get_option(buf, 'modifiable') then
+    vim.notify('Buffer is not modifiable.', vim.log.levels.WARN)
+    return
+  end
+
+  -- 1. Read the entire buffer content into a single string.
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local content = table.concat(lines, '\n')
+
+  -- 2. Check if the content actually has the escape codes we want to replace.
+  -- The `true` flag in find() makes it a plain string search.
+  if not content:find('\\x1b', 1, true) and not content:find('\\n', 1, true) then
+    vim.notify('No ANSI escape codes or literal newlines found to format.', vim.log.levels.INFO)
+    return -- No escape codes found, do nothing.
+  end
+
+  -- 3. Perform the substitutions on the entire content string.
+  -- Replace literal '\n' with a real newline character.
+  local formatted_content = content:gsub('\\n', '\n')
+  -- Replace literal '\x1b' with the actual ESC character (ASCII 27).
+  formatted_content = formatted_content:gsub('\\x1b%[[0-9;]*m', '')
+
+  -- 4. Convert the processed string back into a table of lines.
+  local new_lines = vim.split(formatted_content, '\n', {})
+
+  -- 5. Replace the buffer's content with the newly formatted lines.
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, new_lines)
+
+  -- Let the user know the buffer was formatted.
+  vim.notify('Formatted ANSI escape codes in buffer.', vim.log.levels.INFO)
+end
+
+-- Create the custom user command.
+vim.api.nvim_create_user_command(
+  'CleanAnsiEscape',
+  clean_ansi_escape,
+  { desc = 'Cleans and formats literal ANSI escape codes in the current buffer.' }
 )
 
 -- The line beneath this is called `modeline`. See `:help modeline`
